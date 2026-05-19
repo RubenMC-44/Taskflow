@@ -1,0 +1,79 @@
+/* ── TaskFlow — Estilos personalizados ─────────────────────── */
+
+/* Fuente global */
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Tarjetas de tarea en el tablero */
+.task-card {
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.task-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+    transform: translateY(-1px);
+}
+
+/* Navbar */
+.navbar-brand {
+    font-size: 1.3rem;
+    letter-spacing: -0.3px;
+}
+
+/* Cards sin borde */
+.card {
+    border-radius: 12px;
+}
+
+/* Badge de estado con tamaño consistente */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.2px;
+}
+
+/* Scrollbar fino en listas largas */
+.list-group {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.list-group::-webkit-scrollbar {
+    width: 4px;
+}
+
+.list-group::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.list-group::-webkit-scrollbar-thumb {
+    background: #ced4da;
+    border-radius: 4px;
+}
+
+/* Columnas del tablero kanban */
+.col-md-3 > div {
+    min-height: 200px;
+}
+
+/* Spinner de carga React */
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* Responsive: ocultar descripción en móvil */
+@media (max-width: 576px) {
+    .task-card .card-body {
+        padding: 0.6rem !important;
+    }
+}
