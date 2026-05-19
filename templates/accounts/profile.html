@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi perfil — TaskFlow{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <!-- Tarjeta de perfil -->
+        <div class="card border-0 shadow-sm text-center p-4 mb-3">
+            {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" class="rounded-circle mx-auto mb-3"
+                 style="width:100px;height:100px;object-fit:cover;" alt="Avatar">
+            {% else %}
+            <div class="bg-primary-subtle rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                 style="width:100px;height:100px;">
+                <i class="bi bi-person-fill text-primary" style="font-size:3rem;"></i>
+            </div>
+            {% endif %}
+            <h5 class="fw-bold mb-0">{{ user.get_full_name|default:user.username }}</h5>
+            <span class="text-muted small">@{{ user.username }}</span>
+            <hr>
+            <div class="text-start small">
+                <p class="mb-1"><i class="bi bi-envelope me-2 text-primary"></i>{{ user.email|default:'—' }}</p>
+                <p class="mb-1"><i class="bi bi-shield me-2 text-primary"></i>
+                    {{ profile.get_system_role_display }}
+                    {% if user.is_superuser %}<span class="badge bg-danger ms-1">Superusuario</span>{% endif %}
+                </p>
+                <p class="mb-0"><i class="bi bi-calendar me-2 text-primary"></i>
+                    Miembro desde {{ profile.created_at|date:"d/m/Y" }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Estadísticas rápidas -->
+        <div class="card border-0 shadow-sm p-3">
+            <h6 class="fw-semibold mb-3"><i class="bi bi-bar-chart me-2"></i>Mis estadísticas</h6>
+            <div class="row g-2 text-center">
+                <div class="col-6">
+                    <div class="bg-primary-subtle rounded p-2">
+                        <div class="fw-bold text-primary">{{ user.owned_projects.count }}</div>
+                        <small class="text-muted">Proyectos</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="bg-success-subtle rounded p-2">
+                        <div class="fw-bold text-success">{{ user.assigned_tasks.count }}</div>
+                        <small class="text-muted">Tareas asignadas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de edición -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-pencil me-2"></i>Editar perfil</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nombre</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Apellidos</label>
+                            {{ form.last_name }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Correo electrónico</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Biografía</label>
+                            {{ form.bio }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Foto de perfil</label>
+                            {{ form.avatar }}
+                            {% if profile.avatar %}
+                            <small class="text-muted d-block mt-1">Imagen actual: {{ profile.avatar.name }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check2 me-2"></i>Guardar cambios
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

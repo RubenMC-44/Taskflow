@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrarse — TaskFlow{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-person-plus text-primary fs-1"></i>
+                    <h4 class="mt-2 fw-bold">Crear cuenta</h4>
+                    <p class="text-muted small">Únete a TaskFlow y empieza a gestionar tus proyectos</p>
+                </div>
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nombre</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <div class="text-danger small">{{ form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Apellidos</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <div class="text-danger small">{{ form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-person me-1"></i>Nombre de usuario
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                            <div class="text-danger small">{{ form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-envelope me-1"></i>Correo electrónico
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-lock me-1"></i>Contraseña
+                            </label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                            <div class="text-danger small">{{ form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Confirmar contraseña</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                            <div class="text-danger small">{{ form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger mt-3 py-2">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary w-100 mt-4">
+                        <i class="bi bi-person-check me-2"></i>Crear cuenta
+                    </button>
+                </form>
+                <hr>
+                <p class="text-center text-muted mb-0 small">
+                    ¿Ya tienes cuenta?
+                    <a href="{% url 'login' %}" class="text-primary">Inicia sesión</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

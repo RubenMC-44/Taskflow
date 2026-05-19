@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}TaskFlow — Gestión de Proyectos y Tareas{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="row align-items-center py-5">
+    <div class="col-lg-6">
+        <h1 class="display-5 fw-bold mb-3">
+            Organiza tu equipo.<br>
+            <span class="text-primary">Entrega a tiempo.</span>
+        </h1>
+        <p class="lead text-muted mb-4">
+            TaskFlow es una plataforma de gestión de proyectos y tareas colaborativa.
+            Crea proyectos, asigna tareas, sigue el progreso y trabaja en equipo desde un
+            solo lugar.
+        </p>
+        {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg me-2">
+            <i class="bi bi-speedometer2 me-2"></i>Ir al Dashboard
+        </a>
+        <a href="{% url 'project_create' %}" class="btn btn-outline-primary btn-lg">
+            <i class="bi bi-plus-circle me-2"></i>Nuevo proyecto
+        </a>
+        {% else %}
+        <a href="{% url 'register' %}" class="btn btn-primary btn-lg me-2">
+            <i class="bi bi-rocket me-2"></i>Empezar gratis
+        </a>
+        <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg">
+            Iniciar sesión
+        </a>
+        {% endif %}
+    </div>
+    <div class="col-lg-6 d-none d-lg-flex justify-content-center">
+        <div class="p-4 bg-light rounded-4 shadow-sm w-100" style="max-width: 400px;">
+            <div class="d-flex align-items-center mb-3">
+                <span class="badge bg-success me-2">Activo</span>
+                <span class="fw-semibold">Diseño Web Corporativa</span>
+            </div>
+            <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar bg-primary" style="width: 65%"></div>
+            </div>
+            <small class="text-muted">65% completado · 3 tareas pendientes</small>
+            <hr>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Crítica</span>
+                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Alta</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Completada</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="row g-4 py-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center p-4">
+                <div class="bg-primary-subtle rounded-circle d-inline-flex p-3 mb-3">
+                    <i class="bi bi-folder2-open text-primary fs-3"></i>
+                </div>
+                <h5 class="card-title">Proyectos organizados</h5>
+                <p class="card-text text-muted">Crea proyectos, define plazos y gestiona el equipo desde un panel centralizado.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center p-4">
+                <div class="bg-success-subtle rounded-circle d-inline-flex p-3 mb-3">
+                    <i class="bi bi-check2-all text-success fs-3"></i>
+                </div>
+                <h5 class="card-title">Tareas y prioridades</h5>
+                <p class="card-text text-muted">Asigna tareas con estados, prioridades y fechas límite. Filtra y busca en tiempo real.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center p-4">
+                <div class="bg-warning-subtle rounded-circle d-inline-flex p-3 mb-3">
+                    <i class="bi bi-people text-warning fs-3"></i>
+                </div>
+                <h5 class="card-title">Colaboración en equipo</h5>
+                <p class="card-text text-muted">Añade miembros a tus proyectos, asigna roles y mantén la comunicación con comentarios.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Proyectos públicos -->
+{% if public_projects %}
+<div class="mt-4">
+    <h4 class="mb-3"><i class="bi bi-globe me-2 text-primary"></i>Proyectos públicos recientes</h4>
+    <div class="row g-3">
+        {% for project in public_projects %}
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">{{ project.name }}</h6>
+                        <span class="badge bg-success-subtle text-success">Público</span>
+                    </div>
+                    <p class="card-text text-muted small">
+                        {{ project.description|truncatechars:80 }}
+                    </p>
+                    <div class="progress mb-2" style="height: 5px;">
+                        <div class="progress-bar bg-primary" style="width: {{ project.get_progress_percentage }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ project.get_task_count }} tareas · {{ project.get_progress_percentage }}% completado</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
