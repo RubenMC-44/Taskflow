@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar tarea — TaskFlow{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-danger text-white py-3">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Confirmar eliminación</h5>
+            </div>
+            <div class="card-body p-4 text-center">
+                <p class="fs-5 mb-1">¿Estás seguro de que quieres eliminar la tarea</p>
+                <p class="fs-4 fw-bold text-danger mb-3">"{{ task.title }}"?</p>
+                <p class="text-muted small mb-4">Se eliminarán también todos sus comentarios. <strong>Esta acción no se puede deshacer.</strong></p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-2"></i>Sí, eliminar tarea
+                        </button>
+                    </form>
+                    <a href="{% url 'task_detail' task.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

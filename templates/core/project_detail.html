@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ project.name }} — TaskFlow{% endblock %}
+
+{% block content %}
+<!-- Cabecera del proyecto -->
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'project_list' %}">Proyectos</a></li>
+                <li class="breadcrumb-item active">{{ project.name }}</li>
+            </ol>
+        </nav>
+        <h3 class="fw-bold mb-1">{{ project.name }}</h3>
+        <p class="text-muted mb-2">{{ project.description|default:'Sin descripción.' }}</p>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge
+                {% if project.status == 'active' %}bg-success
+                {% elif project.status == 'paused' %}bg-warning
+                {% elif project.status == 'completed' %}bg-secondary
+                {% else %}bg-danger{% endif %} px-3">
+                {{ project.get_status_display }}
+            </span>
+            {% if project.is_public %}
+            <span class="badge bg-info-subtle text-info border border-info-subtle">Público</span>
+            {% endif %}
+            {% if project.deadline %}
+            <small class="text-muted">
+                <i class="bi bi-calendar3 me-1"></i>Límite: {{ project.deadline|date:"d/m/Y" }}
+            </small>
+            {% endif %}
+            <small class="text-muted">
+                <i class="bi bi-person me-1"></i>{{ project.owner.get_full_name|default:project.owner.username }}
+            </small>
+        </div>
+    </div>
+    {% if can_edit %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'task_create' project.pk %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Nueva tarea
+        </a>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{% url 'project_edit' project.pk %}">
+                    <i class="bi bi-pencil me-2"></i>Editar proyecto
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'project_delete' project.pk %}">
+                    <i class="bi bi-trash me-2"></i>Eliminar proyecto
+                </a></li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Barra de progreso -->
+<div class="card border-0 shadow-sm mb-4 p-3">
+    <div class="d-flex justify-content-between mb-1">
+        <small class="fw-semibold">Progreso global</small>
+        <small class="text-muted">{{ project.get_completed_task_count }}/{{ project.get_task_count }} tareas completadas</small>
+    </div>
+    <div class="progress" style="height:10px;">
+        <div class="progress-bar bg-primary" style="width:{{ project.get_progress_percentage }}%"></div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Columna izquierda: Tablero de tareas -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-kanban me-2"></i>Tablero de tareas</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="row g-3">
+                    <!-- Por hacer -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded p-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-secondary me-2">{{ tasks_by_status.todo.count }}</span>
+                                <small class="fw-semibold text-muted">Por hacer</small>
+                            </div>
+                            {% for task in tasks_by_status.todo %}
+                            <a href="{% url 'task_detail' task.pk %}" class="card border-0 shadow-sm d-block mb-2 text-decoration-none task-card">
+                                <div class="card-body p-2">
+                                    <div class="small fw-semibold text-dark mb-1">{{ task.title|truncatechars:50 }}</div>
+                                    <span class="badge bg-{{ task.priority|yesno:'danger,warning,info,success' }}-subtle text-{{ task.priority|yesno:'danger,warning,info,success' }} small">
+                                        {{ task.get_priority_display }}
+                                    </span>
+                                </div>
+                            </a>
+                            {% empty %}
+                            <p class="text-muted small text-center py-2">Sin tareas</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- En progreso -->
+                    <div class="col-md-3">
+                        <div class="bg-primary-subtle rounded p-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-primary me-2">{{ tasks_by_status.in_progress.count }}</span>
+                                <small class="fw-semibold text-primary">En progreso</small>
+                            </div>
+                            {% for task in tasks_by_status.in_progress %}
+                            <a href="{% url 'task_detail' task.pk %}" class="card border-0 shadow-sm d-block mb-2 text-decoration-none task-card">
+                                <div class="card-body p-2">
+                                    <div class="small fw-semibold text-dark mb-1">{{ task.title|truncatechars:50 }}</div>
+                                    {% if task.assigned_to %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-person me-1"></i>{{ task.assigned_to.username }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </a>
+                            {% empty %}
+                            <p class="text-muted small text-center py-2">Sin tareas</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- En revisión -->
+                    <div class="col-md-3">
+                        <div class="bg-warning-subtle rounded p-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-warning text-dark me-2">{{ tasks_by_status.review.count }}</span>
+                                <small class="fw-semibold text-warning-emphasis">En revisión</small>
+                            </div>
+                            {% for task in tasks_by_status.review %}
+                            <a href="{% url 'task_detail' task.pk %}" class="card border-0 shadow-sm d-block mb-2 text-decoration-none task-card">
+                                <div class="card-body p-2">
+                                    <div class="small fw-semibold text-dark mb-1">{{ task.title|truncatechars:50 }}</div>
+                                </div>
+                            </a>
+                            {% empty %}
+                            <p class="text-muted small text-center py-2">Sin tareas</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- Completadas -->
+                    <div class="col-md-3">
+                        <div class="bg-success-subtle rounded p-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-success me-2">{{ tasks_by_status.done.count }}</span>
+                                <small class="fw-semibold text-success">Completadas</small>
+                            </div>
+                            {% for task in tasks_by_status.done %}
+                            <a href="{% url 'task_detail' task.pk %}" class="card border-0 shadow-sm d-block mb-2 text-decoration-none task-card opacity-75">
+                                <div class="card-body p-2">
+                                    <div class="small fw-semibold text-muted text-decoration-line-through mb-1">{{ task.title|truncatechars:50 }}</div>
+                                </div>
+                            </a>
+                            {% empty %}
+                            <p class="text-muted small text-center py-2">Sin tareas</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna derecha: Miembros -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-people me-2"></i>Miembros del equipo</h6>
+            </div>
+            <div class="card-body p-3">
+                <!-- Propietario -->
+                <div class="d-flex align-items-center gap-2 mb-2 p-2 bg-light rounded">
+                    <div class="bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:36px;height:36px;flex-shrink:0;">
+                        <i class="bi bi-person-fill text-primary small"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold small">{{ project.owner.get_full_name|default:project.owner.username }}</div>
+                        <span class="badge bg-primary-subtle text-primary small">Propietario</span>
+                    </div>
+                </div>
+                <!-- Miembros -->
+                {% for member in members %}
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-2 p-2 rounded">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-secondary-subtle rounded-circle d-flex align-items-center justify-content-center"
+                             style="width:36px;height:36px;flex-shrink:0;">
+                            <i class="bi bi-person text-secondary small"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold small">{{ member.user.get_full_name|default:member.user.username }}</div>
+                            <span class="badge bg-secondary-subtle text-secondary small">{{ member.get_role_display }}</span>
+                        </div>
+                    </div>
+                    {% if can_edit %}
+                    <a href="{% url 'project_remove_member' project.pk member.user.pk %}"
+                       class="btn btn-sm btn-outline-danger py-0 px-1"
+                       onclick="return confirm('¿Eliminar a {{ member.user.username }} del proyecto?')">
+                        <i class="bi bi-x"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <!-- Añadir miembro -->
+                {% if can_edit %}
+                <hr>
+                <h6 class="small fw-semibold mb-2">Añadir miembro</h6>
+                <form method="post" action="{% url 'project_add_member' project.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-2">{{ add_member_form.username }}</div>
+                    <div class="mb-2">{{ add_member_form.role }}</div>
+                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-person-plus me-1"></i>Añadir
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
