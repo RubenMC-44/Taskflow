@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — TaskFlow{% endblock %}
+
+{% block extra_head %}
+<!-- React 18 + Babel Standalone (para JSX en el navegador) -->
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">
+        <i class="bi bi-speedometer2 me-2 text-primary"></i>
+        Dashboard
+    </h3>
+    <a href="{% url 'project_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Nuevo proyecto
+    </a>
+</div>
+
+<!-- Tarjetas de estadísticas (Django) -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-primary fs-1 fw-bold">{{ stats.total_projects }}</div>
+            <small class="text-muted">Proyectos totales</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-success fs-1 fw-bold">{{ stats.active_projects }}</div>
+            <small class="text-muted">Proyectos activos</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-warning fs-1 fw-bold">{{ stats.in_progress_tasks }}</div>
+            <small class="text-muted">Tareas en progreso</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-secondary fs-1 fw-bold">{{ stats.done_tasks }}</div>
+            <small class="text-muted">Tareas completadas</small>
+        </div>
+    </div>
+</div>
+
+<!-- Proyectos recientes (Django) -->
+{% if user_projects %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-folder me-2"></i>Mis proyectos recientes</h6>
+        <a href="{% url 'project_list' %}" class="btn btn-sm btn-outline-primary">Ver todos</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            {% for project in user_projects %}
+            <a href="{% url 'project_detail' project.pk %}" class="list-group-item list-group-item-action px-4 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-semibold">{{ project.name }}</span>
+                        <small class="text-muted ms-2">{{ project.get_task_count }} tareas</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="progress" style="width:80px;height:6px;">
+                            <div class="progress-bar bg-primary" style="width:{{ project.get_progress_percentage }}%"></div>
+                        </div>
+                        <small class="text-muted" style="width:30px;">{{ project.get_progress_percentage }}%</small>
+                        <span class="badge
+                            {% if project.status == 'active' %}bg-success
+                            {% elif project.status == 'paused' %}bg-warning
+                            {% elif project.status == 'completed' %}bg-secondary
+                            {% else %}bg-danger{% endif %}">
+                            {{ project.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ── Componente React: Mis Tareas con filtros en tiempo real ── -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold">
+            <i class="bi bi-list-task me-2 text-primary"></i>
+            Mis tareas <span class="badge bg-primary-subtle text-primary ms-1">React</span>
+        </h6>
+    </div>
+    <div class="card-body p-3">
+        <div id="react-tasks-dashboard"></div>
+    </div>
+</div>
+
+<!-- Token CSRF disponible para fetch() de React -->
+<script>
+    window.CSRF_TOKEN = '{{ csrf_token }}';
+</script>
+
+<!-- Componente React: TasksDashboard -->
+<script type="text/babel">
+{% verbatim %}
+    const { useState, useEffect } = React;
+
+    // Mapeo de colores por estado
+    const STATUS_COLORS = {
+        todo: 'secondary',
+        in_progress: 'primary',
+        review: 'warning',
+        done: 'success',
+    };
+
+    // Mapeo de colores por prioridad
+    const PRIORITY_COLORS = {
+        low: 'success',
+        medium: 'info',
+        high: 'warning',
+        critical: 'danger',
+    };
+
+    function TaskCard({ task }) {
+        return (
+            <a href={task.url} className="list-group-item list-group-item-action px-3 py-2 text-decoration-none">
+                <div className="d-flex justify-content-between align-items-start">
+                    <div className="flex-grow-1">
+                        <div className="d-flex align-items-center gap-2 mb-1">
+                            <span className={`badge bg-${PRIORITY_COLORS[task.priority]}-subtle text-${PRIORITY_COLORS[task.priority]} border border-${PRIORITY_COLORS[task.priority]}-subtle`}>
+                                {task.priority_display}
+                            </span>
+                            {task.is_overdue && (
+                                <span className="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                    Vencida
+                                </span>
+                            )}
+                        </div>
+                        <div className="fw-semibold">{task.title}</div>
+                        <small className="text-muted">
+                            <i className="bi bi-folder2 me-1"></i>{task.project}
+                        </small>
+                    </div>
+                    <span className={`badge bg-${STATUS_COLORS[task.status]} ms-2`}>
+                        {task.status_display}
+                    </span>
+                </div>
+            </a>
+        );
+    }
+
+    function TasksDashboard() {
+        const [tasks, setTasks] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [error, setError] = useState(null);
+        const [statusFilter, setStatusFilter] = useState('');
+        const [priorityFilter, setPriorityFilter] = useState('');
+        const [stats, setStats] = useState(null);
+
+        useEffect(() => {
+            fetchDashboardData();
+        }, []);
+
+        async function fetchDashboardData() {
+            try {
+                setLoading(true);
+                const response = await fetch('/api/dashboard/', {
+                    headers: {
+                        'X-CSRFToken': window.CSRF_TOKEN,
+                    },
+                    credentials: 'same-origin',
+                });
+                if (!response.ok) throw new Error('Error al cargar los datos');
+                const data = await response.json();
+                setTasks(data.recent_tasks);
+                setStats(data);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Filtrado en tiempo real (sin nueva petición)
+        const filteredTasks = tasks.filter(task => {
+            const matchStatus = statusFilter === '' || task.status === statusFilter;
+            const matchPriority = priorityFilter === '' || task.priority === priorityFilter;
+            return matchStatus && matchPriority;
+        });
+
+        if (loading) {
+            return (
+                <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Cargando...</span>
+                    </div>
+                    <p className="text-muted mt-2 small">Cargando tareas...</p>
+                </div>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className="alert alert-danger py-2">
+                    <i className="bi bi-exclamation-triangle me-2"></i>{error}
+                </div>
+            );
+        }
+
+        return (
+            <div>
+                {/* Filtros */}
+                <div className="row g-2 mb-3">
+                    <div className="col-auto">
+                        <select
+                            className="form-select form-select-sm"
+                            value={statusFilter}
+                            onChange={e => setStatusFilter(e.target.value)}
+                        >
+                            <option value="">Todos los estados</option>
+                            <option value="todo">Por hacer</option>
+                            <option value="in_progress">En progreso</option>
+                            <option value="review">En revisión</option>
+                            <option value="done">Completadas</option>
+                        </select>
+                    </div>
+                    <div className="col-auto">
+                        <select
+                            className="form-select form-select-sm"
+                            value={priorityFilter}
+                            onChange={e => setPriorityFilter(e.target.value)}
+                        >
+                            <option value="">Todas las prioridades</option>
+                            <option value="low">Baja</option>
+                            <option value="medium">Media</option>
+                            <option value="high">Alta</option>
+                            <option value="critical">Crítica</option>
+                        </select>
+                    </div>
+                    <div className="col-auto ms-auto">
+                        <small className="text-muted">
+                            Mostrando {filteredTasks.length} de {tasks.length} tareas
+                        </small>
+                    </div>
+                </div>
+
+                {/* Lista de tareas */}
+                {filteredTasks.length === 0 ? (
+                    <div className="text-center py-4 text-muted">
+                        <i className="bi bi-inbox fs-2 d-block mb-2"></i>
+                        No hay tareas que coincidan con los filtros seleccionados.
+                    </div>
+                ) : (
+                    <div className="list-group">
+                        {filteredTasks.map(task => (
+                            <TaskCard key={task.id} task={task} />
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Montar el componente React en el DOM
+    const root = ReactDOM.createRoot(document.getElementById('react-tasks-dashboard'));
+    root.render(<TasksDashboard />);
+{% endverbatim %}
+</script>
+{% endblock %}

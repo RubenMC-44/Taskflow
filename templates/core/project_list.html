@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Proyectos — TaskFlow{% endblock %}
+
+{% block extra_head %}
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">
+        <i class="bi bi-folder2 me-2 text-primary"></i>Mis proyectos
+    </h3>
+    <a href="{% url 'project_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Nuevo proyecto
+    </a>
+</div>
+
+<!-- Componente React: Listado de proyectos con búsqueda y filtros en tiempo real -->
+<div id="react-project-list"></div>
+
+<script>
+    window.CSRF_TOKEN = '{{ csrf_token }}';
+</script>
+
+<script type="text/babel">
+{% verbatim %}
+    const { useState, useEffect, useRef } = React;
+
+    const STATUS_BADGE = {
+        active: 'success',
+        paused: 'warning',
+        completed: 'secondary',
+        cancelled: 'danger',
+    };
+
+    function ProgressBar({ value }) {
+        return (
+            <div className="progress mb-1" style={{ height: '6px' }}>
+                <div
+                    className="progress-bar bg-primary"
+                    style={{ width: `${value}%` }}
+                    role="progressbar"
+                    aria-valuenow={value}
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                />
+            </div>
+        );
+    }
+
+    function ProjectCard({ project }) {
+        return (
+            <div className="col-md-6 col-lg-4">
+                <div className="card border-0 shadow-sm h-100">
+                    <div className="card-body p-4">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                            <h6 className="fw-bold mb-0">{project.name}</h6>
+                            <span className={`badge bg-${STATUS_BADGE[project.status]}`}>
+                                {project.status_display}
+                            </span>
+                        </div>
+                        <p className="text-muted small mb-3" style={{ minHeight: '40px' }}>
+                            {project.description || 'Sin descripción.'}
+                        </p>
+                        <ProgressBar value={project.progress} />
+                        <div className="d-flex justify-content-between text-muted small mb-3">
+                            <span>{project.completed_tasks}/{project.task_count} tareas</span>
+                            <span>{project.progress}%</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center">
+                            <small className="text-muted">
+                                <i className="bi bi-person me-1"></i>{project.owner}
+                            </small>
+                            <a href={project.url} className="btn btn-sm btn-outline-primary">
+                                Ver proyecto
+                            </a>
+                        </div>
+                    </div>
+                    {project.deadline && (
+                        <div className="card-footer bg-transparent border-top py-2 px-4">
+                            <small className="text-muted">
+                                <i className="bi bi-calendar3 me-1"></i>
+                                Fecha límite: {new Date(project.deadline).toLocaleDateString('es-ES')}
+                            </small>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    function ProjectList() {
+        const [projects, setProjects] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [error, setError] = useState(null);
+        const [search, setSearch] = useState('');
+        const [statusFilter, setStatusFilter] = useState('');
+        const debounceRef = useRef(null);
+
+        useEffect(() => {
+            fetchProjects();
+        }, [statusFilter]);
+
+        // Búsqueda con debounce: espera 400ms antes de lanzar la petición
+        useEffect(() => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(() => {
+                fetchProjects();
+            }, 400);
+            return () => clearTimeout(debounceRef.current);
+        }, [search]);
+
+        async function fetchProjects() {
+            try {
+                setLoading(true);
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (statusFilter) params.append('status', statusFilter);
+
+                const response = await fetch(`/api/projects/?${params.toString()}`, {
+                    credentials: 'same-origin',
+                    headers: { 'X-CSRFToken': window.CSRF_TOKEN },
+                });
+                if (!response.ok) throw new Error('Error al cargar proyectos');
+                const data = await response.json();
+                setProjects(data.projects);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        return (
+            <div>
+                {/* Barra de búsqueda y filtros */}
+                <div className="row g-2 mb-4">
+                    <div className="col-md-6">
+                        <div className="input-group">
+                            <span className="input-group-text bg-white">
+                                <i className="bi bi-search text-muted"></i>
+                            </span>
+                            <input
+                                type="text"
+                                className="form-control border-start-0"
+                                placeholder="Buscar proyectos..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className="col-auto">
+                        <select
+                            className="form-select"
+                            value={statusFilter}
+                            onChange={e => setStatusFilter(e.target.value)}
+                        >
+                            <option value="">Todos los estados</option>
+                            <option value="active">Activo</option>
+                            <option value="paused">Pausado</option>
+                            <option value="completed">Completado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+                    <div className="col-auto ms-auto d-flex align-items-center">
+                        <small className="text-muted">
+                            {loading ? 'Buscando...' : `${projects.length} proyecto${projects.length !== 1 ? 's' : ''}`}
+                        </small>
+                    </div>
+                </div>
+
+                {/* Estado de carga */}
+                {loading && (
+                    <div className="text-center py-5">
+                        <div className="spinner-border text-primary" role="status"></div>
+                        <p className="text-muted mt-2">Cargando proyectos...</p>
+                    </div>
+                )}
+
+                {/* Error */}
+                {error && (
+                    <div className="alert alert-danger">
+                        <i className="bi bi-exclamation-triangle me-2"></i>{error}
+                    </div>
+                )}
+
+                {/* Resultados */}
+                {!loading && !error && (
+                    projects.length === 0 ? (
+                        <div className="text-center py-5 text-muted">
+                            <i className="bi bi-folder2-open fs-1 d-block mb-3"></i>
+                            <p>No se encontraron proyectos.</p>
+                            <a href="/projects/new/" className="btn btn-primary">
+                                <i className="bi bi-plus-circle me-2"></i>Crear primer proyecto
+                            </a>
+                        </div>
+                    ) : (
+                        <div className="row g-3">
+                            {projects.map(project => (
+                                <ProjectCard key={project.id} project={project} />
+                            ))}
+                        </div>
+                    )
+                )}
+            </div>
+        );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('react-project-list'));
+    root.render(<ProjectList />);
+{% endverbatim %}
+</script>
+{% endblock %}
