@@ -120,6 +120,6 @@ mediante `fetch()` con el token CSRF de Django.
 
 ## Despliegue
 
-La aplicación puede desplegarse en servicios como **Railway**, **Render** o **DigitalOcean**.En mi caso, para el proyecto voy a aplicar el despliegue en PythonAnywhere. En un Futuro, el despliegué se hará en DigitalOcean.
+La aplicación puede desplegarse en servicios como **Railway**, **Render** o **DigitalOcean**.
 Consulta la documentación oficial de Django para configuración de producción (`DEBUG=False`,
 `ALLOWED_HOSTS`, `SECRET_KEY` desde variable de entorno).
