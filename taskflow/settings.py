@@ -4,18 +4,17 @@ Django settings for TaskFlow project.
 Proyecto Final de Máster — Full Stack Development
 """
 
+import os
 from pathlib import Path
 
 # Ruta base del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ADVERTENCIA DE SEGURIDAD: mantén la clave secreta en producción fuera del código
-SECRET_KEY = 'django-insecure-taskflow-secret-key-change-this-in-production-2024'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-taskflow-secret-key-change-this-in-production-2024')
 
-# ADVERTENCIA DE SEGURIDAD: no uses DEBUG = True en producción
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Django 4.x: orígenes de confianza para la verificación CSRF
 CSRF_TRUSTED_ORIGINS = [
