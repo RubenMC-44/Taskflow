@@ -125,6 +125,7 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 allowed = os.environ.get('ALLOWED_HOSTS', '')
 if allowed:
     ALLOWED_HOSTS = allowed.split(',')
+    CSRF_TRUSTED_ORIGINS = [f'https://{h}' for h in ALLOWED_HOSTS if h]
 
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
