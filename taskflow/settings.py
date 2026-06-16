@@ -21,6 +21,7 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(','
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'http://localhost:8000',
+    'https://taskflow-production-96f8.up.railway.app'
 ]
 
 # Aplicaciones instaladas
