@@ -6,6 +6,7 @@ Proyecto Final de Máster — Full Stack Development
 
 import os
 from pathlib import Path
+import dj_database_url
 
 # Ruta base del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -116,3 +117,17 @@ MESSAGE_TAGS = {
     message_constants.WARNING: 'warning',
     message_constants.ERROR:   'danger',
 }
+
+SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+
+allowed = os.environ.get('ALLOWED_HOSTS', '')
+if allowed:
+    ALLOWED_HOSTS = allowed.split(',')
+
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+db_url = os.environ.get('DATABASE_URL', '')
+if db_url:
+    DATABASES['default'] = dj_database_url.config(default=db_url, conn_max_age=600)
