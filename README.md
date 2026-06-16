@@ -3,6 +3,8 @@
 Aplicación web Full Stack desarrollada con **Django** (backend) y **React** (frontend parcial).  
 Proyecto Final del Máster en Desarrollo Full Stack — ConquerX / ConquerBlocks.
 
+🌐 **Aplicación desplegada:** https://taskflow-production-96f8.up.railway.app
+
 ---
 
 ## Descripción
@@ -16,7 +18,7 @@ progreso en tiempo real.
 | Capa | Tecnología |
 |------|-----------|
 | Backend | Django 4.2, Python 3.10+ |
-| Base de datos | SQLite (desarrollo) |
+| Base de datos | SQLite (desarrollo) / PostgreSQL (producción) |
 | Frontend | Django Templates + React 18 (CDN) |
 | Estilos | Bootstrap 5.3 |
 | Autenticación | Django Auth (sesiones) |
@@ -118,8 +120,44 @@ mediante `fetch()` con el token CSRF de Django.
 
 ---
 
+## Endpoints API (React)
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/dashboard/` | Estadísticas y tareas recientes del usuario |
+| GET | `/api/projects/` | Proyectos del usuario (`?search=` / `?status=`) |
+| GET | `/api/projects/<id>/tasks/` | Tareas de un proyecto (`?status=` / `?priority=`) |
+
+---
+
+## Panel de administración
+
+Accesible en `/admin/` con un superusuario. Permite gestionar usuarios, proyectos y tareas directamente desde la interfaz de Django Admin.
+
+---
+
 ## Despliegue
 
-La aplicación puede desplegarse en servicios como **Railway**, **Render** o **DigitalOcean**.
-Consulta la documentación oficial de Django para configuración de producción (`DEBUG=False`,
-`ALLOWED_HOSTS`, `SECRET_KEY` desde variable de entorno).
+La aplicación está desplegada y accesible públicamente en:
+
+**https://taskflow-production-96f8.up.railway.app**
+
+Desplegada en **Railway** con PostgreSQL como base de datos de producción.
+
+### Variables de entorno necesarias en producción
+
+| Variable | Descripción |
+|---|---|
+| `SECRET_KEY` | Clave secreta de Django |
+| `DEBUG` | `False` en producción |
+| `ALLOWED_HOSTS` | Dominio de la aplicación |
+| `DATABASE_URL` | URL de conexión a PostgreSQL |
+
+### Pasos para redesplegar
+
+```bash
+# 1. Configura las variables de entorno en Railway
+# 2. Conecta el repositorio GitHub
+# 3. Railway detecta automáticamente Python y ejecuta:
+python manage.py migrate && python manage.py collectstatic --noinput && gunicorn taskflow.wsgi
+```
